@@ -1,0 +1,44 @@
+
+GraphedExpression="duty", Color=#a00909
+GraphedExpression="cap_voltage", Color=#0984a0
+GraphedExpression="cap_current", Color=#0964a0
+GraphedExpression="bat_voltage", Color=#094fa0
+GraphedExpression="bat_current", Color=#0940a0
+GraphedExpression="(inp_power).output", Color=#094fa0
+OpenDocument="main.c", FilePath="D:/0myfiles/code/supercap_4switch/Core/Src/main.c", Line=66
+OpenDocument="stm32f3xx_it.c", FilePath="D:/0myfiles/code/supercap_4switch/Core/Src/stm32f3xx_it.c", Line=81
+OpenDocument="startup_stm32f334x8.s", FilePath="D:/0myfiles/code/supercap_4switch/MDK-ARM/startup_stm32f334x8.s", Line=161
+OpenDocument="stm32f3xx_hal_rcc_ex.h", FilePath="D:/0myfiles/code/supercap_4switch/Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_hal_rcc_ex.h", Line=0
+OpenToolbar="Debug", Floating=0, x=0, y=0
+OpenWindow="Source Files", DockArea=LEFT, x=0, y=0, w=304, h=1454, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=689, h=642, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Memory 1", DockArea=BOTTOM, x=0, y=0, w=850, h=435, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x200004A0
+OpenWindow="Watched Data 1", DockArea=RIGHT, x=0, y=1, w=689, h=811, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Data Sampling", DockArea=BOTTOM, x=2, y=0, w=1922, h=435, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
+OpenWindow="Timeline", DockArea=LEFT, x=1, y=0, w=1798, h=1454, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=0, CodePaneShown=0, PinCursor="Cursor Movable", TimePerDiv="100 ms / Div", TimeStampFormat="Time", DataGraphDrawAsPoints=0, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="1181;0", PowerGraphDrawAsPoints=0, PowerGraphLegendShown=0, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="1733;-115", CodeGraphLegendShown=0, CodeGraphLegendPosition="1761;0"
+OpenWindow="Console", DockArea=BOTTOM, x=1, y=0, w=1066, h=435, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+TableHeader="Source Files", SortCol="File", SortOrder="DESCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[437;146;118;146;1330]
+TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" duty";" cap_voltage";" cap_current";" bat_voltage";" bat_current";" (inp_power).output"], ColWidths=[100;100;100;100;100;100;100;100]
+TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[659;118;174;222;206;238;188;222;216]
+TableHeader="Power Sampling", SortCol="Index", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[212;208;142;128]
+TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[263;147;100;946]
+WatchedExpression="voltage", Window=Watched Data 1
+WatchedExpression="current", Window=Watched Data 1
+WatchedExpression="kf", Window=Watched Data 1
+WatchedExpression="duty", Window=Watched Data 1
+WatchedExpression="inp_power", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="cap_vol_h", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="cap_vol_l", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="cap_cur", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="power_limit", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="bsp_can_rxbuf", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="power_target", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="power_ref", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="cancnt", Window=Watched Data 1
+WatchedExpression="adc1_buf", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="cap_voltage", Window=Watched Data 1
+WatchedExpression="cap_current", Window=Watched Data 1
+WatchedExpression="bat_voltage", Window=Watched Data 1
+WatchedExpression="bat_current", Window=Watched Data 1

@@ -1,0 +1,11 @@
+ins_task\nlink_tofsense_frame0.o: ..\application\nlink_tofsense_frame0.c
+ins_task\nlink_tofsense_frame0.o: ..\application\nlink_tofsense_frame0.h
+ins_task\nlink_tofsense_frame0.o: ..\application\nlink_typedef.h
+ins_task\nlink_tofsense_frame0.o: E:\keil\ARM\compiler\Bin\..\include\stddef.h
+ins_task\nlink_tofsense_frame0.o: E:\keil\ARM\compiler\Bin\..\include\stdint.h
+ins_task\nlink_tofsense_frame0.o: E:\keil\ARM\compiler\Bin\..\include\stdio.h
+ins_task\nlink_tofsense_frame0.o: E:\keil\ARM\compiler\Bin\..\include\stdlib.h
+ins_task\nlink_tofsense_frame0.o: E:\keil\ARM\compiler\Bin\..\include\string.h
+ins_task\nlink_tofsense_frame0.o: ..\application\decoder.h
+ins_task\nlink_tofsense_frame0.o: ..\application\protocol.h
+ins_task\nlink_tofsense_frame0.o: ..\application\nlink_utils.h

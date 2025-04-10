@@ -1,0 +1,90 @@
+<html>
+<body>
+<pre>
+<h1>�Vision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: µVision V5.41.0.0
+Copyright (C) 2024 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: 11 Windows, HP Inc., LIC=UJWP0-BTXX8-2ZWW4-FLS0P-Z7PGW-HIR2F
+ 
+Tool Versions:
+Toolchain:       MDK-ARM Plus  Version: 5.41.0.0
+Toolchain Path:  E:\keil\ARM\compiler\Bin
+C Compiler:      Armcc.exe V5.06 update 7 (build 960)
+Assembler:       Armasm.exe V5.06 update 7 (build 960)
+Linker/Locator:  ArmLink.exe V5.06 update 7 (build 960)
+Library Manager: ArmAr.exe V5.06 update 7 (build 960)
+Hex Converter:   FromElf.exe V5.06 update 7 (build 960)
+CPU DLL:         SARMCM3.DLL V5.41.0.0
+Dialog DLL:      DCM.DLL V1.17.5.0
+Target DLL:      CMSIS_AGDI.dll V1.33.21.0
+Dialog DLL:      TCM.DLL V1.56.4.0
+ 
+<h2>Project:</h2>
+C:\Users\13466\Desktop\yyymouse\ymouse永远爱zyy\无人机新\MDK-ARM\ins_task.uvprojx
+Project File Date:  02/21/2025
+
+<h2>Output:</h2>
+*** Using Compiler 'V5.06 update 7 (build 960)', folder: 'E:\keil\ARM\compiler\Bin'
+Build target 'ins_task'
+compiling gimbal_task.c...
+..\application\cmd_ctr.h(82): warning:  #1295-D: Deprecated declaration flash_date_init - give arg types
+  extern void flash_date_init();
+..\application\cmd_ctr.h(84): warning:  #1295-D: Deprecated declaration wavedisplay - give arg types
+  extern char wavedisplay();
+..\application\cmd_ctr.h(88): warning:  #1295-D: Deprecated declaration imu_cail_behaviour - give arg types
+  extern uint8_t imu_cail_behaviour();
+..\MDK-ARM\DMPower.h(49): warning:  #1-D: last line of file ends without a newline
+  #endif /* __DMPOWER__ */
+..\application\gimbal_task.c(458): warning:  #550-D: variable "yaw_channel"  was set but never used
+      static int16_t yaw_channel = 0, pitch_channel = 0;	
+..\application\gimbal_task.c(458): warning:  #550-D: variable "pitch_channel"  was set but never used
+      static int16_t yaw_channel = 0, pitch_channel = 0;	
+..\application\gimbal_task.c(459): warning:  #177-D: variable "pitch_angle_set"  was declared but never referenced
+  		        fp32 pitch_angle_set;
+..\application\gimbal_task.c(493): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+  		if(loop->gimbal_pitch_motor.absolute_angle_set>0.2)
+..\application\gimbal_task.c(132): warning:  #177-D: function "gimbal_PID_clear"  was declared but never referenced
+  static void gimbal_PID_clear(gimbal_PID_t *gimbal_pid_clear)
+..\application\gimbal_task.c(355): warning:  #177-D: function "gimbal_absolute_angle_limit"  was declared but never referenced
+  static void gimbal_absolute_angle_limit(gimbal_motor_t *gimbal_motor, fp32 add)
+..\application\gimbal_task.c(397): warning:  #550-D: variable "yaw_motor_visual_pixel"  was set but never used
+  		static fp32 yaw_motor_visual_pixel = 0;
+..\application\gimbal_task.c(398): warning:  #550-D: variable "pitch_motor_visual_pixel"  was set but never used
+  		static fp32 pitch_motor_visual_pixel = 0;
+..\application\gimbal_task.c(399): warning:  #177-D: variable "pitch_motor_visual_date"  was declared but never referenced
+  		static fp32 pitch_motor_visual_date = 0;
+..\application\gimbal_task.c(403): warning:  #177-D: variable "Visual_Ture_RInit_data_first"  was declared but never referenced
+  static uint8_t Visual_Ture_RInit_data_first;
+..\application\gimbal_task.c(404): warning:  #177-D: variable "Visual_Ture_RInit_data_end"  was declared but never referenced
+  static uint8_t Visual_Ture_RInit_data_end;
+..\application\gimbal_task.c: 15 warnings, 0 errors
+linking...
+Program Size: Code=102222 RO-data=4534 RW-data=2688 ZI-data=109952  
+FromELF: creating hex file...
+"ins_task\ins_task.axf" - 0 Error(s), 15 Warning(s).
+
+<h2>Software Packages used:</h2>
+
+Package Vendor: ARM
+                https://www.keil.com/pack/ARM.CMSIS.6.1.0.pack
+                ARM::CMSIS@6.1.0
+                CMSIS (Common Microcontroller Software Interface Standard)
+   * Component: CORE Version: 6.1.0
+
+Package Vendor: Keil
+                https://www.keil.com/pack/Keil.STM32F4xx_DFP.3.0.0.pack
+                Keil::STM32F4xx_DFP@3.0.0
+                STMicroelectronics STM32F4 Series Device Support
+
+<h2>Collection of Component include folders:</h2>
+  ./RTE/_ins_task
+  E:/keil/pack/ARM/CMSIS/6.1.0/CMSIS/Core/Include
+
+<h2>Collection of Component Files used:</h2>
+
+   * Component: ARM::CMSIS:CORE@6.1.0
+Build Time Elapsed:  00:00:02
+</pre>
+</body>
+</html>
