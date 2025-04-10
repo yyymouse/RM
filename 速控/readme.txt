@@ -1,0 +1,3 @@
+1.第一次下载程序，flash中无数据，程序会自动将define中的数据搬入flash当中
+2.使用use_flash数据使用flash数据，当set_par设置参数之后，参数会暂时存到结构体中，但是不会存入flash中，需要接收到save指令。
+3.use_def也是一样，如果需要将define中的数据重新写入flash，需要重新save数据到flash中，但是注意，此时会将flash原本的数据覆盖。
