@@ -1,0 +1,747 @@
+#include "chassic_task.h"
+#include "bsp_usb.h"
+#include "referee.h"
+#include "gimbal_task.h"
+#include "remote_control.h"
+#include "usb_task.h"
+#include "cmd_ctr.h"
+#include "stm32_flash.h"
+#include "shoot_task.h"
+#define rc_deadband_limit(input, output, dealine)        \
+    {                                                    \
+        if ((input) > (dealine) || (input) < -(dealine)) \
+        {                                                \
+            (output) = (input);                          \
+        }                                                \
+        else                                             \
+        {                                                \
+            (output) = 0;                                \
+        }                                                \
+    }
+uint32_t color = 0;
+
+chassis chassic_ctrl;//底盘所有参数存值结构体
+
+uint16_t power_1 = 60;
+uint16_t power_2 = 80;
+uint16_t power_3 = 100;
+uint8_t robot_color = 0;
+
+void chassis_init(chassis *chassis_init);//初始化函数
+static void chassis_ctrl_loop(chassis *chassic_ctrl_loop);//底盘电机输出循环
+static void chassis_feedback_update(chassis *chassis_date_update);//底盘姿态更新
+static void chassic_follow_gimbal(chassis *chassis_rc_vector);//底盘跟随云台角速度计算
+static void chassis_vector_to_mecanum_wheel_speed(chassis *chassis_wheel_speed);
+static void chassic_mode_set(chassis *mode);//状态机模式切换
+static void chassic_mode_ctrl(chassis *mode_ctrl);//状态机模式对应执行
+
+void chassic_task(void const * pvParameters)
+{
+
+    chassis_init(&chassic_ctrl); //初始化
+    for(;;)
+    {
+        chassic_ctrl.power_limit = &ext_game_robot_status.chassis_power_limit ; /*超级电容*/
+//        chassic_ctrl.power_buffer = &ext_power_heat_data.chassis_power_buffer ;
+
+        if(chassic_ctrl.chassis_RC->key.v & KEY_PRESSED_OFFSET_Q)
+        {
+            chassic_ctrl.power_limit = &power_1;
+        }
+        else if (chassic_ctrl.chassis_RC->key.v & KEY_PRESSED_OFFSET_E)
+        {
+            chassic_ctrl.power_limit = &power_2;
+        }
+        else if (chassic_ctrl.chassis_RC->key.v & KEY_PRESSED_OFFSET_F)
+        {
+            chassic_ctrl.power_limit = &power_3;
+        }
+
+
+//        CAN_cmd_supercap(((unsigned short)*chassic_ctrl.power_limit)*100,((unsigned short)* chassic_ctrl.power_buffer)*100);
+
+        chassis_feedback_update(&chassic_ctrl);  //底盘状态数据计算以及更新
+        chassic_mode_set(&chassic_ctrl);//状态机模式切换
+        chassic_mode_ctrl(&chassic_ctrl);//状态机模式对应执行
+        chassis_vector_to_mecanum_wheel_speed(&chassic_ctrl);  //运动分解
+        chassis_ctrl_loop(&chassic_ctrl);        //底盘电机输出循环
+        vTaskDelay(5);
+    }
+
+}
+
+const chassis *get_chassic_date(void)
+{
+    return &chassic_ctrl;
+}
+
+
+static void chassic_PID_init(chassic_PID_t *pid, fp32 maxout, fp32 max_iout, fp32 kp, fp32 ki, fp32 kd)
+{
+    if (pid == NULL)
+    {
+        return;
+    }
+    pid->kp = kp;
+    pid->ki = ki;
+    pid->kd = kd;
+
+    pid->err = 0.0f;
+    pid->get = 0.0f;
+
+    pid->max_iout = max_iout;
+    pid->max_out = maxout;
+}
+
+static fp32 chassic_PID_calc(chassic_PID_t *pid, fp32 get, fp32 set, fp32 error_delta)
+{
+    fp32 err;
+    if (pid == NULL)
+    {
+        return 0.0f;
+    }
+    pid->get = get;
+    pid->set = set;
+
+    err = set - get;
+    pid->err = rad_format(err);
+    pid->Pout = pid->kp * pid->err;
+    pid->Iout += pid->ki * pid->err;
+    pid->Dout = pid->kd * error_delta;
+    abs_limit(&pid->Iout, pid->max_iout);
+    pid->out = pid->Pout + pid->Iout + pid->Dout;
+    abs_limit(&pid->out, pid->max_out);
+    return pid->out;
+}
+
+
+
+void chassis_init(chassis *chassis_init)
+{
+
+
+    const static fp32 chassis_x_order_filter[1] = {CHASSIS_ACCEL_X_NUM};    //速度设置的一阶滤波参数
+    const static fp32 chassis_y_order_filter[1] = {CHASSIS_ACCEL_Y_NUM};
+
+    const static fp32 chassis_filter[1] = {0.01};
+    uint8_t i;
+    chassis_init->chassis_RC = get_remote_control_point(); //获取遥控器指针
+    chassis_init->chassis_yaw_motor = get_yaw_motor_point();//获取yaw轴数据
+    chassis_init->chassis_INS_angle = get_INS_angle_point();//获取imu数据
+    chassis_init->gimbal_INT_gyro_point = get_gyro_data_point();//获取角速度
+    chassis_init->chassis_motor[0].chassis_motor_measure = get_chassis_motor_measure_point(0); //获取底盘四个电机返回值
+    chassis_init->chassis_motor[1].chassis_motor_measure = get_chassis_motor_measure_point(1);
+    chassis_init->chassis_motor[2].chassis_motor_measure = get_chassis_motor_measure_point(2);
+    chassis_init->chassis_motor[3].chassis_motor_measure = get_chassis_motor_measure_point(3);
+    chassis_init->chassis_mode = chassic_zero;  //初始化关闭底盘
+    chassis_init->Sport_mode = remote_mode;//初始化为遥控器控制
+
+    const static fp32 chassis_mode_spin_pid1[3] = {spin_speed_P, spin_speed_I, spin_speed_D};    //自旋速度
+
+
+    PID_init(&chassis_init->motor_speed_pid[0],PID_POSITION,mid_date.motor_speed_pid,M3508_out_max,M3508_iout_max);
+    PID_init(&chassis_init->motor_speed_pid[1],PID_POSITION,mid_date.motor_speed_pid,M3508_out_max,M3508_iout_max);
+    PID_init(&chassis_init->motor_speed_pid[2],PID_POSITION,mid_date.motor_speed_pid,M3508_out_max,M3508_iout_max);
+    PID_init(&chassis_init->motor_speed_pid[3],PID_POSITION,mid_date.motor_speed_pid,M3508_out_max,M3508_iout_max);
+
+    for( i =0; i<4; i++ ) //初始化底盘每个电机速度环的pid
+    {
+
+        PID_init(&chassis_init->motor_speed_pid[i],PID_POSITION,mid_date.motor_speed_pid,M3508_out_max,M3508_iout_max);
+        first_order_filter_init(&chassis_init->motor_speed_pid_slow[i],CHASSIS_CONTROL_TIME,chassis_filter);
+    }
+    PID_init(&chassis_init->chassis_angle_pid, PID_POSITION, mid_date.chassis_angle_pid1, M3508_angle_out_max,M3508_angle_iout_max);   //底盘跟随云台pid
+    PID_init(&chassis_init->chassis_speed_pid, PID_POSITION, mid_date.chassis_speed_pid1, M3508_speed_out_max,M3508_speed_iout_max);   //
+//				 chassic_PID_init(&chassis_init->chassic_wz,M3508_speed_out_max,M3508_angle_iout_max,M3505_angle_P, M3505_angle_I, M3505_angle_D);//底盘跟随云台pid（未使用）
+
+    PID_init(&chassis_init->chassis_mode_spin_wz,PID_POSITION,chassis_mode_spin_pid1,spin_speed_out_max,spin_speed_iout_max);  //自旋恒速pid
+
+    //一阶滤波初始化
+    first_order_filter_init(&chassis_init->chassis_cmd_slow_set_vx, CHASSIS_CONTROL_TIME, chassis_x_order_filter);
+    first_order_filter_init(&chassis_init->chassis_cmd_slow_set_vy, CHASSIS_CONTROL_TIME, chassis_y_order_filter);
+
+}
+
+
+fp32 speed_date[7][2]= {{power_limit_X_5,power_limit_Y_5},
+    {power_limit_X_6,power_limit_Y_6},
+    {power_limit_X_7,power_limit_Y_7},
+    {power_limit_X_8,power_limit_Y_8},
+    {power_limit_X_10,power_limit_Y_10},
+    {power_limit_X_12,power_limit_Y_12},
+    {power_limit_X_CP,power_limit_Y_CP}
+};
+// 50    60     70    80   100   120    CP
+fp32 PIN_SPEED[]= {2.0,  2.2,  2.3,  2.4,  3.3,  3.5,  1111};
+fp32 spin_cp=4.8;
+fp32 spin_old ;
+int  prower_bank;
+int  date_middle;
+
+int xjb_direction = 1;
+
+//根据裁判系统返回的底盘功率上限，调整底盘不开电容的移动最大功率
+fp32 *speed_update(void)
+{
+
+
+    if(chassic_ctrl.chassis_RC->key.v & SUPER_CAP )
+    {
+        date_middle=65535;
+        chassic_ctrl.TOP_SPIN_SPEED=spin_cp;
+
+    }
+    else
+    {
+        prower_bank = *chassic_ctrl.power_limit;
+        date_middle =prower_bank;
+
+    }
+
+    if (chassic_ctrl.chassis_RC->key.v & CHASSIS_FRONT_KEY ||chassic_ctrl.chassis_RC->key.v & CHASSIS_BACK_KEY || chassic_ctrl.chassis_RC->key.v &CHASSIS_LEFT_KEY || chassic_ctrl.chassis_RC->key.v & CHASSIS_RIGHT_KEY)
+    {
+
+        spin_old = 0.5;
+
+    }
+    else
+        spin_old = 1;
+
+
+    switch(date_middle)
+    {
+    case 45:
+    {
+        chassic_ctrl.TOP_SPIN_SPEED=PIN_SPEED[0]*spin_old;
+        return speed_date[0];
+
+        break;
+    }
+    case 50:
+    {
+        chassic_ctrl.TOP_SPIN_SPEED=PIN_SPEED[1]*spin_old;;
+        return speed_date[1];
+        break;
+
+    }
+
+    case 55:
+    {
+        chassic_ctrl.TOP_SPIN_SPEED=PIN_SPEED[2]*spin_old;;
+        return speed_date[2];
+        break;
+
+    }
+
+    case 60:
+    {
+        chassic_ctrl.TOP_SPIN_SPEED=PIN_SPEED[3]*spin_old;;
+        return speed_date[3];
+        break;
+
+    }
+    case 80:
+    {
+        chassic_ctrl.TOP_SPIN_SPEED=PIN_SPEED[4]*spin_old;;
+        return speed_date[4];
+        break;
+
+    }
+    case 100:
+    {
+        chassic_ctrl.TOP_SPIN_SPEED=PIN_SPEED[5]*spin_old;;
+        return speed_date[5];
+        break;
+
+    }
+    case 65535:
+    {
+        chassic_ctrl.TOP_SPIN_SPEED=PIN_SPEED[6];
+        return speed_date[6];
+        break;
+
+    }
+    default :
+    {
+        chassic_ctrl.TOP_SPIN_SPEED=PIN_SPEED[0]*spin_old;;
+        return speed_date[0];
+    }
+    break;
+
+    }
+
+}
+
+#define bilixishu 1000.0
+
+//遥控器（处理后）值生成底盘速度
+static void chassis_control_vector(chassis *chassis_move_to_vector)
+{
+    if(chassis_move_to_vector->Sport_mode==remote_mode)
+    {
+        //max and min speed
+        //最大 最小速度X_speed_update(void)
+        chassis_move_to_vector->vx_max_speed =  speed_update()[0];
+        chassis_move_to_vector->vx_min_speed = -speed_update()[0];
+
+        chassis_move_to_vector->vy_max_speed =  speed_update()[1];
+        chassis_move_to_vector->vy_min_speed = -speed_update()[1];
+
+        if (chassis_move_to_vector == NULL )
+        {
+            return;
+        }
+
+        static double vector_acceleration_1 = 0.1;
+        static double vector_acceleration_2 = 0.1;
+        static double vector_acceleration_3 = 0.1;
+        static double vector_acceleration_4 = 0.1;
+        int16_t vx_channel, vy_channel;
+        fp32 vx_set_channel, vy_set_channel;
+        //deadline, because some remote control need be calibrated,  the value of rocker is not zero in middle place,
+        //死区限制，因为遥控器可能存在差异 摇杆在中间，其值不为0
+        rc_deadband_limit(chassis_move_to_vector->chassis_RC->rc.ch[CHASSIS_X_CHANNEL], vx_channel, CHASSIS_RC_DEADLINE);
+        rc_deadband_limit(chassis_move_to_vector->chassis_RC->rc.ch[CHASSIS_Y_CHANNEL], vy_channel, CHASSIS_RC_DEADLINE);
+
+        vx_set_channel = vx_channel *  CHASSIS_VX_RC_SEN;
+        vy_set_channel = vy_channel * -CHASSIS_VY_RC_SEN;
+
+        //keyboard set speed set-point
+        //键盘控制,更新为键盘矢量控制
+
+        if(!KEY_IS_DOWN(rc_ctrl,SHIFT))
+        {
+            if (chassis_move_to_vector->chassis_RC->key.v & CHASSIS_FRONT_KEY)
+            {
+                if(vector_acceleration_1 >= 1)
+                {
+                    vector_acceleration_1 = 1;
+                }
+                else if(vector_acceleration_1 < 1)
+                {
+                    vector_acceleration_1 = vector_acceleration_1 + CHASSISS_ACCELERATION;
+                }
+                vx_set_channel = chassis_move_to_vector->vx_max_speed * vector_acceleration_1;
+            }
+            else if (chassis_move_to_vector->chassis_RC->key.v & CHASSIS_BACK_KEY)
+            {
+                if(vector_acceleration_2 >= 1)
+                {
+                    vector_acceleration_2 = 1;
+                }
+                else if(vector_acceleration_2 < 1)
+                {
+                    vector_acceleration_2 = vector_acceleration_2 + CHASSISS_ACCELERATION;
+                }
+                vx_set_channel = chassis_move_to_vector->vx_min_speed * vector_acceleration_2;
+            }
+
+            if (chassis_move_to_vector->chassis_RC->key.v & CHASSIS_LEFT_KEY)
+            {
+                if(vector_acceleration_3 >= 1)
+                {
+                    vector_acceleration_3 = 1;
+                }
+                else if(vector_acceleration_3 < 1)
+                {
+                    vector_acceleration_3 = vector_acceleration_3 + CHASSISS_ACCELERATION;
+                }
+                vy_set_channel = chassis_move_to_vector->vy_max_speed * vector_acceleration_3;
+            }
+            else if (chassis_move_to_vector->chassis_RC->key.v & CHASSIS_RIGHT_KEY)
+            {
+                if(vector_acceleration_4 >= 1)
+                {
+                    vector_acceleration_4 = 1;
+                }
+                else if(vector_acceleration_4 < 1)
+                {
+                    vector_acceleration_4 = vector_acceleration_4 + CHASSISS_ACCELERATION;
+                }
+                vy_set_channel = chassis_move_to_vector->vy_min_speed * vector_acceleration_4;
+            }
+        }
+
+
+
+        if (chassis_move_to_vector->chassis_RC->key.v & TOP_LEFT_SPIN)
+        {
+            if (chassis_move_to_vector->chassis_RC->key.v & CHASSIS_FRONT_KEY)
+            {
+
+                vx_set_channel = chassis_move_to_vector->vx_max_speed * 0.6;
+            }
+            else if (chassis_move_to_vector->chassis_RC->key.v & CHASSIS_BACK_KEY)
+            {
+
+                vx_set_channel = chassis_move_to_vector->vx_min_speed * 0.6;
+            }
+
+            if (chassis_move_to_vector->chassis_RC->key.v & CHASSIS_LEFT_KEY)
+            {
+
+                vy_set_channel = chassis_move_to_vector->vy_max_speed * 0.6;
+            }
+            else if (chassis_move_to_vector->chassis_RC->key.v & CHASSIS_RIGHT_KEY)
+            {
+
+                vy_set_channel = chassis_move_to_vector->vy_min_speed * 0.6;
+            }
+
+        }
+
+
+
+        //first order low-pass replace ramp function, calculate chassis speed set-point to improve control performance
+        //一阶低通滤波代替斜波作为底盘速度输入
+        first_order_filter_cali(&chassis_move_to_vector->chassis_cmd_slow_set_vx, vx_set_channel);
+        first_order_filter_cali(&chassis_move_to_vector->chassis_cmd_slow_set_vy, vy_set_channel);
+        //stop command, need not slow change, set zero derectly
+        //停止信号，不需要缓慢加速，直接减速到零
+        if (vx_set_channel < CHASSIS_RC_DEADLINE * CHASSIS_VX_RC_SEN && vx_set_channel > -CHASSIS_RC_DEADLINE * CHASSIS_VX_RC_SEN)
+        {
+            vector_acceleration_1 = 0.2;
+            vector_acceleration_2 = 0.2;
+            chassis_move_to_vector->chassis_cmd_slow_set_vx.out = 0.0f;
+            vx_set_channel = 0;
+        }
+
+        if (vy_set_channel < CHASSIS_RC_DEADLINE * CHASSIS_VY_RC_SEN && vy_set_channel > -CHASSIS_RC_DEADLINE * CHASSIS_VY_RC_SEN)
+        {
+            vector_acceleration_3 = 0.2;
+            vector_acceleration_4 = 0.2;
+            chassis_move_to_vector->chassis_cmd_slow_set_vy.out = 0.0f;
+            vy_set_channel=0;
+        }
+        chassis_move_to_vector->set_vx = chassis_move_to_vector->chassis_cmd_slow_set_vx.out;
+        chassis_move_to_vector->set_vy = chassis_move_to_vector->chassis_cmd_slow_set_vy.out;
+
+    }
+    else if(chassis_move_to_vector->Sport_mode==auto_mod)
+    {
+        chassis_move_to_vector->set_vx = auto_set_v[0];
+        chassis_move_to_vector->set_vy = auto_set_v[1];
+    }
+
+
+}
+
+float chassic_yaw_calc(void)//去零点
+{
+    float set;
+    set = chassic_ctrl.chassis_yaw_motor->absolute_angle_set;
+    float aset = (set +3.14)/3.14*2 * 360;
+    float aget = (chassic_ctrl.chassis_yaw+3.14) / 3.14*2 * 360;
+
+    float res = 0.0f;
+    if(aset >= aget) {
+        if((aset - aget) > 180) {	//aset = 350 aget = 10
+            res = aset - 360 - aget;
+        } else {					//aset = 20 aget = 10
+            res = aset - aget;
+        }
+    } else {
+        if((aset - aget) < -180) { 	//aset = 10 aget = 350
+            res = 360 + aset - aget;
+        } else {					//aset = 10 aget = 20
+            res = aset - aget;
+        }
+    }
+
+    return PID_calc(&chassic_ctrl.chassis_angle_pid,aget, aget + res);//角度环
+}
+
+
+
+//底盘跟随云台计算角速度函数
+static void chassic_follow_gimbal(chassis *chassis_rc_vector)
+{
+    if(chassis_rc_vector->Sport_mode==remote_mode)
+    {
+        PID_calc(&chassis_rc_vector->chassis_angle_pid,-chassis_rc_vector->chassis_yaw_motor->relative_angle,0);//底盘跟随云台
+        PID_calc(&chassis_rc_vector->chassis_speed_pid,chassis_rc_vector->wz,chassis_rc_vector->chassis_angle_pid.out);//速度环
+        chassis_rc_vector->set_wz =  chassis_rc_vector->chassis_speed_pid.out*PITCH_DIRECTION;
+    }
+    else if(chassis_rc_vector->Sport_mode==auto_mod)
+    {
+        chassis_rc_vector->set_wz = auto_set_v[2];
+    }
+
+}
+
+char diversion_key;
+char diversion_key_count=0;
+char diversion_flag=0;
+
+
+
+uint32_t division_tick = 0;
+
+static void chassis_vector_to_mecanum_wheel_speed(chassis *chassis_wheel_speed)
+{
+
+    if(KEY_IS_DOWN(rc_ctrl,Z)&& HAL_GetTick() - division_tick > 500)
+    {
+        division_tick = HAL_GetTick();
+        chassis_wheel_speed->chassis_mode = chassic_zero;     //按键按下则停止地盘运动
+        diversion_flag =1;  //转向之后，底盘跟随标志位置1，关闭地盘跟随
+        gimbal_ctrl.gimbal_yaw_motor.absolute_angle_set = gimbal_ctrl.gimbal_yaw_motor.absolute_angle_set+pi;
+        if(gimbal_ctrl.gimbal_yaw_motor.absolute_angle_set>pi)
+        {
+            gimbal_ctrl.gimbal_yaw_motor.absolute_angle_set -=2*pi;
+
+        }
+        diversion_key_count = !diversion_key_count;
+    }
+
+
+    if(diversion_key_count==0) {
+        yaw_offset_ecd  =  yaw_ecd;
+    }
+    else {
+        yaw_offset_ecd  =  yaw_back_ecd;
+    }
+
+    chassis_wheel_speed->wheel_speed[0] = (-chassis_wheel_speed->set_vx - chassis_wheel_speed->set_vy + ( - 1.0f) * MOTOR_DISTANCE_TO_CENTER * chassis_wheel_speed->set_wz);
+    chassis_wheel_speed->wheel_speed[1] = (+chassis_wheel_speed->set_vx - chassis_wheel_speed->set_vy + ( - 1.0f) * MOTOR_DISTANCE_TO_CENTER * chassis_wheel_speed->set_wz);
+    chassis_wheel_speed->wheel_speed[2] = (+chassis_wheel_speed->set_vx + chassis_wheel_speed->set_vy + ( - 1.0f) * MOTOR_DISTANCE_TO_CENTER * chassis_wheel_speed->set_wz);
+    chassis_wheel_speed->wheel_speed[3] = (-chassis_wheel_speed->set_vx + chassis_wheel_speed->set_vy + ( - 1.0f) * MOTOR_DISTANCE_TO_CENTER * chassis_wheel_speed->set_wz);
+    diversion_key = 0;
+}
+
+static void chassis_feedback_update(chassis *chassis_date_update)
+{
+    if (chassis_date_update == NULL)
+    {
+        return;
+    }
+
+    uint8_t i;
+    for(i=0; i<4; i++)
+    {
+        //计算获得的电机速度并存入（这里输入的是轮子电机转子的rpm（转/分钟），需要转化为点击的线速度）
+        chassis_date_update->chassis_motor[i].speed = CHASSIS_MOTOR_RPM_TO_VECTOR_SEN*chassis_date_update->chassis_motor[i].chassis_motor_measure->speed_rpm;
+				
+    }
+    //空转下，由轮子速度计算车世界坐标系下的速度
+    chassis_date_update->vx = ( chassis_date_update->chassis_motor[1].speed - chassis_date_update->chassis_motor[0].speed+chassis_date_update->chassis_motor[2].speed - chassis_date_update->chassis_motor[3].speed)/4;
+    chassis_date_update->vy = ( chassis_date_update->chassis_motor[2].speed + chassis_date_update->chassis_motor[3].speed-chassis_date_update->chassis_motor[0].speed - chassis_date_update->chassis_motor[1].speed)/4;
+    chassis_date_update->wz = -( chassis_date_update->chassis_motor[0].speed + chassis_date_update->chassis_motor[1].speed + chassis_date_update->chassis_motor[2].speed + chassis_date_update->chassis_motor[3].speed)/(4*MOTOR_DISTANCE_TO_CENTER);
+
+    //计算车世界坐标系下的yaw轴角度
+    chassis_date_update->chassis_yaw = rad_format(*(chassis_date_update->chassis_INS_angle+0)-chassis_date_update->chassis_yaw_motor->relative_angle);
+
+
+}
+
+static void chassic_mode_set(chassis *mode)
+{
+    int ii;
+    if(switch_is_down(mode->chassis_RC->rc.s[s_right]))//右下则全停机
+    {
+        mode->chassis_mode = chassic_zero;
+        gimbal_ctrl.gimbal_yaw_motor.gimbal_motor_mode = GIMBAL_ZERO;
+    }
+
+    else if(switch_is_mid(mode->chassis_RC->rc.s[s_right]))//右中云台
+    {
+        mode->chassis_mode = chassic_zero;
+        gimbal_ctrl.gimbal_yaw_motor.gimbal_motor_mode = GIMBAL_MOTOR_GYRO;
+    }
+    else if(switch_is_up(mode->chassis_RC->rc.s[s_right])) //右上全开
+    {
+        gimbal_ctrl.gimbal_yaw_motor.gimbal_motor_mode = GIMBAL_MOTOR_GYRO;
+        mode->chassis_mode = chassic_follow_chassic_yaw;
+		
+        if((mode->chassis_RC->key.v& KEY_PRESSED_OFFSET_SHIFT)||switch_is_up(mode
+					->chassis_RC->rc.s[s_left]))  //shift键为小陀螺
+        {
+					gimbal_ctrl.gimbal_yaw_motor.gimbal_motor_mode = GIMBAL_MOTOR_GYRO;
+            mode->chassis_mode = chassis_mode_spin;//正小陀螺
+					
+        }
+
+
+    }
+
+    if(gimbal_ctrl.gimbal_rc->mouse.press_r == 1 || switch_is_up(mode->chassis_RC->rc.s[s_left]))
+    {
+        gimbal_ctrl.gimbal_yaw_motor.gimbal_motor_mode = GIMBAL_MOTOR_VISUAL;
+				shoot.shoot_mode=visual_shoot;
+		}
+
+     if( switch_is_mid(mode->chassis_RC->rc.s[s_left]))   //left_mid=gimbal_gyro
+    {
+        gimbal_ctrl.gimbal_yaw_motor.gimbal_motor_mode = GIMBAL_MOTOR_GYRO;
+        if(gimbal_ctrl.gimbal_rc->mouse.press_r == 1)//mouse_right=visual
+        {
+            gimbal_ctrl.gimbal_yaw_motor.gimbal_motor_mode = GIMBAL_MOTOR_VISUAL;
+					
+        }
+
+    }
+
+    if(diversion_flag == 1 && mode->chassis_yaw_motor->relative_angle ) //如果底盘相对云台的角度小于0.1°则地盘不动
+    {
+        diversion_flag= 0;  //如果掉头完成开启底盘跟随
+        mode->chassis_mode = chassic_zero;
+    }
+    if((gimbal_ctrl.gimbal_rc->rc.ch[2] == 660 && gimbal_ctrl.gimbal_rc->rc.ch[3] == -660) && (gimbal_ctrl.gimbal_rc->rc.ch[0] == -660 && gimbal_ctrl.gimbal_rc->rc.ch[1] == -660))
+    {
+        SCB->AIRCR =0X05FA0000|(uint32_t)0x04;
+        __get_FAULTMASK(); // ??????
+        NVIC_SystemReset(); // ??
+    }
+//	if(chassic_ctrl.chassis_RC->key.v & KEY_PRESSED_OFFSET_G)
+//	{
+//		robot_color=0;
+//	}
+//  if(chassic_ctrl.chassis_RC->key.v & KEY_PRESSED_OFFSET_X)
+//	{
+//		robot_color=1;
+//	}
+//
+//  if(mode->chassis_RC->key.v& KEY_PRESSED_OFFSET_CTRL)  //
+//	{
+//		mode->chassis_mode = chassic_zero;
+//	}
+//
+//}
+    if(KEY_IS_DOWN(rc_ctrl,G) && HAL_GetTick() - color > 500)   //判断按键按下
+    {
+        color = HAL_GetTick();
+        /*iii++;                  //消抖计数
+        if(iii>10)             //如果计数大于100 则射速等级升级1
+        {
+        	shoot.speed_level++;
+        	if(shoot.speed_level>=level_max)
+        	{
+        		shoot.speed_level=0;
+            iii=0;
+
+        	}
+          iii=0;
+        }*/
+
+        robot_color++;
+        if(robot_color >= color_max)
+        {
+            robot_color = 0;
+        }
+
+    }
+    else
+    {
+        ii=0;
+
+    }
+
+}
+pid_type_def spin_pid;
+//
+static void chassic_mode_ctrl(chassis *mode_ctrl)
+{
+    if (mode_ctrl->chassis_RC->key.v&KEY_PRESSED_OFFSET_F)
+    {
+        xjb_direction = (~xjb_direction) +1;
+    }
+    if(mode_ctrl->chassis_mode == chassic_follow_chassic_yaw)   //底盘跟随云台
+    {
+
+        chassic_follow_gimbal(mode_ctrl); //底盘跟随云台计算角速度函数
+
+        chassis_control_vector(mode_ctrl);  //遥控器（处理后）值生成底盘速度
+
+    }
+    else if(mode_ctrl->chassis_mode == chassis_mode_spin)   //小陀螺
+    {	
+				
+        const static fp32 wz_pid[3] = {4, 0, 0.2};  //云台移动底盘不变速
+
+        PID_init(&spin_pid,PID_POSITION,wz_pid,100,50);
+
+        static fp32 delta = 0.0f;
+        static fp32 angle_detla = 0.0f;
+        static fp32 absolute_wz =0.0f;
+				float vx,vy,wz;
+        chassis_control_vector(mode_ctrl);//生成底盘速度
+        delta = - mode_ctrl->chassis_yaw_motor->relative_angle * PITCH_DIRECTION ;
+				//new
+				float sin_delta = arm_sin_f32(delta);
+				float cos_delta = arm_cos_f32(delta);
+				vx = mode_ctrl->set_vx;
+				vy = mode_ctrl->set_vy;
+				mode_ctrl->set_vx = vx*cos_delta + vy*sin_delta;
+        mode_ctrl->set_vy = -vx*sin_delta + vy*cos_delta;
+        mode_ctrl->set_wz = 3.5;
+
+
+    }
+	else if(mode_ctrl->chassis_mode==chassis_mode_fan_spin)
+	{
+		 const static fp32 wz_pid[3] = {4, 0, 0.2};  //云台移动底盘不变速
+
+        PID_init(&spin_pid,PID_POSITION,wz_pid,100,50);
+
+        static fp32 delta = 0.0f;
+        static fp32 angle_detla = 0.0f;
+        static fp32 absolute_wz =0.0f;
+				float vx,vy,wz;
+        chassis_control_vector(mode_ctrl);//生成底盘速度
+        delta = - mode_ctrl->chassis_yaw_motor->relative_angle * PITCH_DIRECTION ;
+				//new
+				float sin_delta = arm_sin_f32(delta);
+				float cos_delta = arm_cos_f32(delta);
+				vx = mode_ctrl->set_vx;
+				vy = mode_ctrl->set_vy;
+				mode_ctrl->set_vx = vx*cos_delta + vy*sin_delta;
+        mode_ctrl->set_vy = -vx*sin_delta + vy*cos_delta;
+        mode_ctrl->set_wz = 5.0;
+	}
+    else if(mode_ctrl->chassis_mode == chassic_zero)
+    {
+        mode_ctrl->set_vx = 0;
+        mode_ctrl->set_vy = 0;
+        mode_ctrl->set_wz = 0;
+
+    }
+
+}
+
+static void chassis_ctrl_loop(chassis *chassic_ctrl_loop)
+{
+    if(chassic_ctrl_loop->chassis_mode == chassic_zero)
+    {
+        chassic_ctrl_loop->motor_speed_pid[0].out=0;
+        chassic_ctrl_loop->motor_speed_pid[1].out=0;
+        chassic_ctrl_loop->motor_speed_pid[2].out=0;
+        chassic_ctrl_loop->motor_speed_pid[3].out=0;
+
+        chassic_ctrl_loop->motor_speed_pid_slow[0].out=0;
+        chassic_ctrl_loop->motor_speed_pid_slow[1].out=0;
+        chassic_ctrl_loop->motor_speed_pid_slow[2].out=0;
+        chassic_ctrl_loop->motor_speed_pid_slow[3].out=0;
+
+    }
+    else
+    {
+        uint8_t i;
+        for(i=0; i<4; i++)
+        {
+            PID_calc(&chassic_ctrl_loop->motor_speed_pid[i],
+                     chassic_ctrl_loop->chassis_motor[i].speed,
+                     chassic_ctrl_loop->wheel_speed[i]);//对每个轮子进行速度设置
+            first_order_filter_cali(&chassic_ctrl_loop->motor_speed_pid_slow[i], chassic_ctrl_loop->motor_speed_pid[i].out);
+        }
+
+
+    }
+
+    CAN_cmd_chassis(chassic_ctrl_loop->motor_speed_pid_slow[0].out,
+                    chassic_ctrl_loop->motor_speed_pid_slow[1].out,
+                    chassic_ctrl_loop->motor_speed_pid_slow[2].out,
+                    chassic_ctrl_loop->motor_speed_pid_slow[3].out
+                   );
+
+}
+

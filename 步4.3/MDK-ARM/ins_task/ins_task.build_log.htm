@@ -1,0 +1,248 @@
+<html>
+<body>
+<pre>
+<h1>�Vision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: µVision V5.41.0.0
+Copyright (C) 2024 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: 11 Windows, HP Inc., LIC=UJWP0-BTXX8-2ZWW4-FLS0P-Z7PGW-HIR2F
+ 
+Tool Versions:
+Toolchain:       MDK-ARM Plus  Version: 5.41.0.0
+Toolchain Path:  E:\keil\ARM\compiler\Bin
+C Compiler:      Armcc.exe V5.06 update 7 (build 960)
+Assembler:       Armasm.exe V5.06 update 7 (build 960)
+Linker/Locator:  ArmLink.exe V5.06 update 7 (build 960)
+Library Manager: ArmAr.exe V5.06 update 7 (build 960)
+Hex Converter:   FromElf.exe V5.06 update 7 (build 960)
+CPU DLL:         SARMCM3.DLL V5.41.0.0
+Dialog DLL:      DCM.DLL V1.17.5.0
+Target DLL:      CMSIS_AGDI.dll V1.33.21.0
+Dialog DLL:      TCM.DLL V1.56.4.0
+ 
+<h2>Project:</h2>
+C:\Users\13466\Desktop\yyymouse\ymouse永远爱zyy\bu完全体\MDK-ARM\ins_task.uvprojx
+Project File Date:  03/14/2025
+
+<h2>Output:</h2>
+*** Using Compiler 'V5.06 update 7 (build 960)', folder: 'E:\keil\ARM\compiler\Bin'
+Build target 'ins_task'
+compiling cmd_ctr.c...
+..\application\cmd_ctr.h(79): warning:  #1295-D: Deprecated declaration flash_date_init - give arg types
+  extern void flash_date_init();
+..\application\cmd_ctr.h(81): warning:  #1295-D: Deprecated declaration wavedisplay - give arg types
+  extern char wavedisplay();
+..\application\cmd_ctr.h(85): warning:  #1295-D: Deprecated declaration imu_cail_behaviour - give arg types
+  extern uint8_t imu_cail_behaviour();
+..\application\cmd_ctr.c(192): warning:  #940-D: missing return statement at end of non-void function "ctr_mode" 
+  }
+..\application\cmd_ctr.c(265): warning:  #940-D: missing return statement at end of non-void function "set_par" 
+  }
+..\application\cmd_ctr.c(220): warning:  #177-D: variable "chassis_angle_pid"  was declared but never referenced
+  	static char chassis_angle_pid[]="chassis_angle_pid1";	
+..\application\cmd_ctr.c(221): warning:  #177-D: variable "chassis_speed_pid"  was declared but never referenced
+  	static char chassis_speed_pid[]="chassis_angle_pid1";
+..\application\cmd_ctr.c(223): warning:  #177-D: variable "pitch_angle_pid"  was declared but never referenced
+  	static char pitch_angle_pid[]="pitch_angle_pid";	
+..\application\cmd_ctr.c(224): warning:  #177-D: variable "Pitch_speed_pid"  was declared but never referenced
+  	static char Pitch_speed_pid[]="chassis_angle_pid1";	
+..\application\cmd_ctr.c(225): warning:  #177-D: variable "yaw_angle_pid"  was declared but never referenced
+  	static char yaw_angle_pid[]="yaw_angle_pid";	
+..\application\cmd_ctr.c(226): warning:  #177-D: variable "Yaw_speed_pid"  was declared but never referenced
+  	static char Yaw_speed_pid[]="Yaw_speed_pid";	
+..\application\cmd_ctr.c(288): warning:  #940-D: missing return statement at end of non-void function "get_par" 
+  }
+..\application\cmd_ctr.c(300): warning:  #940-D: missing return statement at end of non-void function "save" 
+  }
+..\application\cmd_ctr.c(315): warning:  #940-D: missing return statement at end of non-void function "use_def" 
+  }
+..\application\cmd_ctr.c(329): warning:  #940-D: missing return statement at end of non-void function "use_flash" 
+  }
+..\application\cmd_ctr.c(340): warning:  #940-D: missing return statement at end of non-void function "def2flash" 
+  }
+..\application\cmd_ctr.c(403): warning:  #940-D: missing return statement at end of non-void function "get_cmd_name" 
+  }
+..\application\cmd_ctr.c(416): warning:  #940-D: missing return statement at end of non-void function "reset" 
+  }
+..\application\cmd_ctr.c(494): warning:  #940-D: missing return statement at end of non-void function "wave_set" 
+  }
+..\application\cmd_ctr.c(516): warning:  #940-D: missing return statement at end of non-void function "switch_wave" 
+  }
+..\application\cmd_ctr.c(572): warning:  #940-D: missing return statement at end of non-void function "wavedisplay" 
+  }
+..\application\cmd_ctr.c(597): warning:  #940-D: missing return statement at end of non-void function "imu_cali" 
+  }
+..\application\cmd_ctr.c(646): warning:  #940-D: missing return statement at end of non-void function "set_version" 
+  }
+..\application\cmd_ctr.c: 23 warnings, 0 errors
+compiling test_task.c...
+..\application\cmd_ctr.h(79): warning:  #1295-D: Deprecated declaration flash_date_init - give arg types
+  extern void flash_date_init();
+..\application\cmd_ctr.h(81): warning:  #1295-D: Deprecated declaration wavedisplay - give arg types
+  extern char wavedisplay();
+..\application\cmd_ctr.h(85): warning:  #1295-D: Deprecated declaration imu_cail_behaviour - give arg types
+  extern uint8_t imu_cail_behaviour();
+..\application\test_task.c: 3 warnings, 0 errors
+compiling freertos.c...
+..\application\cmd_ctr.h(79): warning:  #1295-D: Deprecated declaration flash_date_init - give arg types
+  extern void flash_date_init();
+..\application\cmd_ctr.h(81): warning:  #1295-D: Deprecated declaration wavedisplay - give arg types
+  extern char wavedisplay();
+..\application\cmd_ctr.h(85): warning:  #1295-D: Deprecated declaration imu_cail_behaviour - give arg types
+  extern uint8_t imu_cail_behaviour();
+../Src/freertos.c: 3 warnings, 0 errors
+compiling bsp_usb.c...
+..\application\cmd_ctr.h(79): warning:  #1295-D: Deprecated declaration flash_date_init - give arg types
+  extern void flash_date_init();
+..\application\cmd_ctr.h(81): warning:  #1295-D: Deprecated declaration wavedisplay - give arg types
+  extern char wavedisplay();
+..\application\cmd_ctr.h(85): warning:  #1295-D: Deprecated declaration imu_cail_behaviour - give arg types
+  extern uint8_t imu_cail_behaviour();
+..\bsp\boards\bsp_usb.c: 3 warnings, 0 errors
+compiling usb_task.c...
+..\application\cmd_ctr.h(79): warning:  #1295-D: Deprecated declaration flash_date_init - give arg types
+  extern void flash_date_init();
+..\application\cmd_ctr.h(81): warning:  #1295-D: Deprecated declaration wavedisplay - give arg types
+  extern char wavedisplay();
+..\application\cmd_ctr.h(85): warning:  #1295-D: Deprecated declaration imu_cail_behaviour - give arg types
+  extern uint8_t imu_cail_behaviour();
+..\application\usb_task.c(20): warning:  #177-D: variable "status"  was declared but never referenced
+  static const char status[2][7] = {"OK", "ERROR!"};
+..\application\usb_task.c: 4 warnings, 0 errors
+compiling shoot_task.c...
+..\application\cmd_ctr.h(79): warning:  #1295-D: Deprecated declaration flash_date_init - give arg types
+  extern void flash_date_init();
+..\application\cmd_ctr.h(81): warning:  #1295-D: Deprecated declaration wavedisplay - give arg types
+  extern char wavedisplay();
+..\application\cmd_ctr.h(85): warning:  #1295-D: Deprecated declaration imu_cail_behaviour - give arg types
+  extern uint8_t imu_cail_behaviour();
+..\application\shoot_task.c(85): warning:  #177-D: variable "SHOOT2_filter"  was declared but never referenced
+      const static fp32 SHOOT2_filter[1] = {0.0005};    //����������һ����������
+..\application\shoot_task.c(86): warning:  #177-D: variable "SHOOT1_filter"  was declared but never referenced
+      const static fp32 SHOOT1_filter[1] = {0.0005};  
+..\application\shoot_task.c: 5 warnings, 0 errors
+compiling chassic_task.c...
+..\application\cmd_ctr.h(79): warning:  #1295-D: Deprecated declaration flash_date_init - give arg types
+  extern void flash_date_init();
+..\application\cmd_ctr.h(81): warning:  #1295-D: Deprecated declaration wavedisplay - give arg types
+  extern char wavedisplay();
+..\application\cmd_ctr.h(85): warning:  #1295-D: Deprecated declaration imu_cail_behaviour - give arg types
+  extern uint8_t imu_cail_behaviour();
+..\application\chassic_task.c(218): warning:  #111-D: statement is unreachable
+          break;
+..\application\chassic_task.c(224): warning:  #111-D: statement is unreachable
+          break;
+..\application\chassic_task.c(232): warning:  #111-D: statement is unreachable
+          break;
+..\application\chassic_task.c(240): warning:  #111-D: statement is unreachable
+          break;
+..\application\chassic_task.c(247): warning:  #111-D: statement is unreachable
+          break;
+..\application\chassic_task.c(254): warning:  #111-D: statement is unreachable
+          break;
+..\application\chassic_task.c(261): warning:  #111-D: statement is unreachable
+          break;
+..\application\chassic_task.c(269): warning:  #111-D: statement is unreachable
+      break;
+..\application\chassic_task.c(372): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+                  vx_set_channel = chassis_move_to_vector->vx_max_speed * 0.6;
+..\application\chassic_task.c(377): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+                  vx_set_channel = chassis_move_to_vector->vx_min_speed * 0.6;
+..\application\chassic_task.c(383): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+                  vy_set_channel = chassis_move_to_vector->vy_max_speed * 0.6;
+..\application\chassic_task.c(388): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+                  vy_set_channel = chassis_move_to_vector->vy_min_speed * 0.6;
+..\application\chassic_task.c(433): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+      float aset = (set +3.14)/3.14*2 * 360;
+..\application\chassic_task.c(434): warning:  #1035-D: single-precision operand implicitly converted to double-precision
+      float aget = (chassic_ctrl.chassis_yaw+3.14) / 3.14*2 * 360;
+..\application\chassic_task.c(539): warning:  #550-D: variable "ii"  was set but never used
+      int ii;
+..\application\chassic_task.c(664): warning:  #177-D: variable "angle_detla"  was declared but never referenced
+          static fp32 angle_detla = 0.0f;
+..\application\chassic_task.c(665): warning:  #177-D: variable "absolute_wz"  was declared but never referenced
+          static fp32 absolute_wz =0.0f;
+..\application\chassic_task.c(666): warning:  #177-D: variable "wz"  was declared but never referenced
+  				float vx,vy,wz;
+..\application\chassic_task.c(687): warning:  #177-D: variable "angle_detla"  was declared but never referenced
+          static fp32 angle_detla = 0.0f;
+..\application\chassic_task.c(688): warning:  #177-D: variable "absolute_wz"  was declared but never referenced
+          static fp32 absolute_wz =0.0f;
+..\application\chassic_task.c(689): warning:  #177-D: variable "wz"  was declared but never referenced
+  				float vx,vy,wz;
+..\application\chassic_task.c(79): warning:  #177-D: function "chassic_PID_init"  was declared but never referenced
+  static void chassic_PID_init(chassic_PID_t *pid, fp32 maxout, fp32 max_iout, fp32 kp, fp32 ki, fp32 kd)
+..\application\chassic_task.c(96): warning:  #177-D: function "chassic_PID_calc"  was declared but never referenced
+  static fp32 chassic_PID_calc(chassic_PID_t *pid, fp32 get, fp32 set, fp32 error_delta)
+..\application\chassic_task.c: 26 warnings, 0 errors
+compiling gimbal_task.c...
+..\application\cmd_ctr.h(79): warning:  #1295-D: Deprecated declaration flash_date_init - give arg types
+  extern void flash_date_init();
+..\application\cmd_ctr.h(81): warning:  #1295-D: Deprecated declaration wavedisplay - give arg types
+  extern char wavedisplay();
+..\application\cmd_ctr.h(85): warning:  #1295-D: Deprecated declaration imu_cail_behaviour - give arg types
+  extern uint8_t imu_cail_behaviour();
+..\application\gimbal_task.c(434): warning:  #188-D: enumerated type mixed with another type
+          HAL_GPIO_WritePin(GPIOC,GPIO_PIN_8,SET);
+..\application\gimbal_task.c(451): warning:  #188-D: enumerated type mixed with another type
+          HAL_GPIO_WritePin(GPIOC,GPIO_PIN_8,RESET);
+..\application\gimbal_task.c(448): warning:  #550-D: variable "yaw_channel"  was set but never used
+          static int16_t yaw_channel = 0, pitch_channel = 0;
+..\application\gimbal_task.c(448): warning:  #550-D: variable "pitch_channel"  was set but never used
+          static int16_t yaw_channel = 0, pitch_channel = 0;
+..\application\gimbal_task.c(449): warning:  #177-D: variable "rate_yaw"  was declared but never referenced
+          uint8_t rate_yaw=1;
+..\application\gimbal_task.c(450): warning:  #177-D: variable "rate_pitch"  was declared but never referenced
+          uint8_t rate_pitch=1;
+..\application\gimbal_task.c(126): warning:  #177-D: function "gimbal_PID_clear"  was declared but never referenced
+  static void gimbal_PID_clear(gimbal_PID_t *gimbal_pid_clear)
+..\application\gimbal_task.c(355): warning:  #177-D: function "gimbal_absolute_angle_limit"  was declared but never referenced
+  static void gimbal_absolute_angle_limit(gimbal_motor_t *gimbal_motor, fp32 add)
+..\application\gimbal_task.c(397): warning:  #550-D: variable "yaw_motor_visual_pixel"  was set but never used
+  static fp32 yaw_motor_visual_pixel = 0;
+..\application\gimbal_task.c(398): warning:  #550-D: variable "pitch_motor_visual_pixel"  was set but never used
+  static fp32 pitch_motor_visual_pixel = 0;
+..\application\gimbal_task.c(399): warning:  #177-D: variable "pitch_motor_visual_date"  was declared but never referenced
+  static fp32 pitch_motor_visual_date = 0;
+..\application\gimbal_task.c(403): warning:  #177-D: variable "Visual_Ture_RInit_data_first"  was declared but never referenced
+  static uint8_t Visual_Ture_RInit_data_first;
+..\application\gimbal_task.c(404): warning:  #177-D: variable "Visual_Ture_RInit_data_end"  was declared but never referenced
+  static uint8_t Visual_Ture_RInit_data_end;
+..\application\gimbal_task.c: 16 warnings, 0 errors
+compiling ui_task.c...
+..\application\cmd_ctr.h(79): warning:  #1295-D: Deprecated declaration flash_date_init - give arg types
+  extern void flash_date_init();
+..\application\cmd_ctr.h(81): warning:  #1295-D: Deprecated declaration wavedisplay - give arg types
+  extern char wavedisplay();
+..\application\cmd_ctr.h(85): warning:  #1295-D: Deprecated declaration imu_cail_behaviour - give arg types
+  extern uint8_t imu_cail_behaviour();
+..\application\ui_task.c: 3 warnings, 0 errors
+linking...
+Program Size: Code=80460 RO-data=4352 RW-data=2476 ZI-data=110164  
+FromELF: creating hex file...
+"ins_task\ins_task.axf" - 0 Error(s), 86 Warning(s).
+
+<h2>Software Packages used:</h2>
+
+Package Vendor: ARM
+                https://www.keil.com/pack/ARM.CMSIS.6.1.0.pack
+                ARM::CMSIS@6.1.0
+                CMSIS (Common Microcontroller Software Interface Standard)
+   * Component: CORE Version: 6.1.0
+
+Package Vendor: Keil
+                https://www.keil.com/pack/Keil.STM32F4xx_DFP.3.0.0.pack
+                Keil::STM32F4xx_DFP@3.0.0
+                STMicroelectronics STM32F4 Series Device Support
+
+<h2>Collection of Component include folders:</h2>
+  ./RTE/_ins_task
+  E:/keil/pack/ARM/CMSIS/6.1.0/CMSIS/Core/Include
+
+<h2>Collection of Component Files used:</h2>
+
+   * Component: ARM::CMSIS:CORE@6.1.0
+Build Time Elapsed:  00:00:03
+</pre>
+</body>
+</html>
