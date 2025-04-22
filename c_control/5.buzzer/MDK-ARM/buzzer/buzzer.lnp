@@ -1,0 +1,28 @@
+--cpu=Cortex-M4.fp.sp
+"buzzer\startup_stm32f407xx.o"
+"buzzer\main.o"
+"buzzer\gpio.o"
+"buzzer\tim.o"
+"buzzer\stm32f4xx_it.o"
+"buzzer\stm32f4xx_hal_msp.o"
+"buzzer\stm32f4xx_hal_tim.o"
+"buzzer\stm32f4xx_hal_tim_ex.o"
+"buzzer\stm32f4xx_hal_rcc.o"
+"buzzer\stm32f4xx_hal_rcc_ex.o"
+"buzzer\stm32f4xx_hal_flash.o"
+"buzzer\stm32f4xx_hal_flash_ex.o"
+"buzzer\stm32f4xx_hal_flash_ramfunc.o"
+"buzzer\stm32f4xx_hal_gpio.o"
+"buzzer\stm32f4xx_hal_dma_ex.o"
+"buzzer\stm32f4xx_hal_dma.o"
+"buzzer\stm32f4xx_hal_pwr.o"
+"buzzer\stm32f4xx_hal_pwr_ex.o"
+"buzzer\stm32f4xx_hal_cortex.o"
+"buzzer\stm32f4xx_hal.o"
+"buzzer\stm32f4xx_hal_exti.o"
+"buzzer\system_stm32f4xx.o"
+"buzzer\bsp_buzzer.o"
+--strict --scatter "buzzer\buzzer.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "buzzer.map" -o buzzer\buzzer.axf

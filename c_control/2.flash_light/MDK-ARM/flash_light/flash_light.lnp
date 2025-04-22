@@ -1,0 +1,26 @@
+--cpu=Cortex-M4.fp.sp
+"flash_light\startup_stm32f407xx.o"
+"flash_light\main.o"
+"flash_light\gpio.o"
+"flash_light\stm32f4xx_it.o"
+"flash_light\stm32f4xx_hal_msp.o"
+"flash_light\system_stm32f4xx.o"
+"flash_light\stm32f4xx_hal_tim.o"
+"flash_light\stm32f4xx_hal_tim_ex.o"
+"flash_light\stm32f4xx_hal_rcc.o"
+"flash_light\stm32f4xx_hal_rcc_ex.o"
+"flash_light\stm32f4xx_hal_flash.o"
+"flash_light\stm32f4xx_hal_flash_ex.o"
+"flash_light\stm32f4xx_hal_flash_ramfunc.o"
+"flash_light\stm32f4xx_hal_gpio.o"
+"flash_light\stm32f4xx_hal_dma_ex.o"
+"flash_light\stm32f4xx_hal_dma.o"
+"flash_light\stm32f4xx_hal_pwr.o"
+"flash_light\stm32f4xx_hal_pwr_ex.o"
+"flash_light\stm32f4xx_hal_cortex.o"
+"flash_light\stm32f4xx_hal.o"
+"flash_light\stm32f4xx_hal_exti.o"
+--strict --scatter "flash_light\flash_light.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "flash_light.map" -o flash_light\flash_light.axf
